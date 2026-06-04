@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Test</title>
+<style>
+  body { background: #111; color: #fff; font-family: sans-serif; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  label { background: #c8102e; color: #fff; padding: 16px 32px; border-radius: 6px; font-size: 1rem; cursor: pointer; display: inline-block; }
+  img { max-width: 100%; border-radius: 8px; display: none; }
+  #status { color: #aaa; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h2>Upload Test</h2>
+  <p id="status">No file selected</p>
+  <label>
+    Tap to Choose Photo
+    <input type="file" accept="image/*" id="fi" style="display:none">
+  </label>
+  <img id="preview">
+<script>
+  document.getElementById('fi').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) { document.getElementById('status').textContent = 'No file'; return; }
+    document.getElementById('status').textContent = 'Got: ' + file.name + ' (' + file.type + ')';
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = document.getElementById('preview');
+      img.src = ev.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+</body>
+</html>
