@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Christmas Lights Preview — High-Strung Christmas Lights</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Open+Sans:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
+    --white: #fff; --red: #c8102e; --red-dim: #8b0b1f;
+    --gold: #f5c518; --text: #e8e8e8; --muted: #777;
+    --green-dark: #1a4a1a;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Open Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+  header { width: 100%; background: #000; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--red); }
+  .logo img { height: 38px; display: block; }
+  .logo-fallback { display: none; font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 0.95rem; color: #fff; letter-spacing: 0.04em; text-transform: uppercase; }
+  .logo img.errored { display: none; }
+  .logo img.errored ~ .logo-fallback { display: block; }
+  .header-cta { font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: var(--red); padding: 8px 18px; border-radius: 3px; text-decoration: none; transition: background 0.15s; }
+  .header-cta:hover { background: var(--red-dim); }
+
+  main { width: 100%; max-width: 920px; padding: 28px 20px 60px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+  .hero { text-align: center; }
+  .hero-eyebrow { font-family: 'Montserrat', sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 7px; }
+  .hero h1 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: clamp(1.6rem, 3.8vw, 2.5rem); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.1; color: #fff; margin-bottom: 8px; }
+  .hero p { color: var(--muted); font-size: 0.85rem; font-weight: 300; max-width: 440px; margin: 0 auto; line-height: 1.7; }
+
+  /* Upload */
+  .upload-zone { width: 100%; border: 1.5px dashed #2e2e2e; border-radius: 6px; padding: 52px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; background: var(--surface); }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--red); background: #1a1010; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; pointer-events: none; }
+  .upload-icon { width: 50px; height: 50px; border: 1px solid #2e2e2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1c1c; }
+  .upload-zone h3 { font-family: 'Montserrat', sans-serif; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #fff; }
+  .upload-zone p { font-size: 0.76rem; color: var(--muted); }
+
+  /* Design panel */
+  #panel-design { width: 100%; display: none; flex-direction: column; gap: 14px; }
+  #panel-design.active { display: flex; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; position: relative; }
+  .toolbar-group { display: flex; align-items: center; gap: 7px; }
+  .toolbar-label { font-family: 'Montserrat', sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .toolbar-sep { width: 1px; height: 22px; background: var(--border); margin: 0 3px; }
+
+  /* Mode buttons */
+  .mode-btn { font-family: 'Montserrat', sans-serif; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 11px; border-radius: 3px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .mode-btn:hover { color: #fff; border-color: #555; }
+  .mode-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+  .mode-btn.garland-active { background: #1a5c1a; border-color: #2a8c2a; color: #aaffaa; }
+  .mode-btn.wreath-active { background: #1a4a1a; border-color: #2a7a2a; color: #88ee88; }
+
+  /* Pattern slots */
+  .pattern-slots { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .pattern-slot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; transition: transform 0.15s; flex-shrink: 0; }
+  .pattern-slot:hover { transform: scale(1.2); }
+  .pattern-add { width: 20px; height: 20px; border-radius: 50%; border: 2px dashed #444; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #666; transition: color 0.15s, border-color 0.15s; flex-shrink: 0; }
+  .pattern-add:hover { color: #fff; border-color: #fff; }
+
+  /* Color picker popup */
+  .color-picker-popup { position: absolute; z-index: 200; background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 10px; display: none; flex-wrap: wrap; gap: 6px; width: 148px; box-shadow: 0 8px 28px rgba(0,0,0,0.7); top: 100%; left: 0; margin-top: 6px; }
+  .color-picker-popup.open { display: flex; }
+  .cp-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.12s, border-color 0.12s; }
+  .cp-swatch:hover { transform: scale(1.2); border-color: #fff; }
+
+  /* Wreath size */
+  .wreath-size-wrap { display: flex; align-items: center; gap: 7px; }
+  input[type=range] { -webkit-appearance: none; height: 3px; background: #333; border-radius: 2px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--red); cursor: pointer; }
+  .range-val { font-size: 0.7rem; color: var(--muted); min-width: 28px; }
+
+  /* Buttons */
+  .btn { padding: 9px 18px; border-radius: 3px; font-family: 'Montserrat', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: none; }
+  .btn:disabled { opacity: 0.3; pointer-events: none; }
+  .btn-primary  { background: var(--red); color: #fff; }
+  .btn-success  { background: #1a5c1a; color: #7fff7f; border: 1px solid #2a8c2a; font-size: 0.72rem; padding: 11px 22px; }
+  .btn-danger   { background: #1a1a1a; color: #ff5555; border: 1px solid #3a1a1a; padding: 7px 12px; font-size: 0.63rem; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* Canvas area */
+  .canvas-wrap { width: 100%; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); background: #000; touch-action: none; user-select: none; }
+  #main-img { width: 100%; display: block; pointer-events: none; }
+  #main-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; }
+
+  /* Zoom controls */
+  .zoom-controls { position: absolute; bottom: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; z-index: 10; }
+  .zoom-btn { width: 34px; height: 34px; background: rgba(0,0,0,0.7); border: 1px solid #444; border-radius: 5px; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; font-family: monospace; line-height: 1; }
+  .zoom-btn:hover { background: rgba(200,16,46,0.7); }
+  .zoom-reset { font-size: 11px; font-family: 'Montserrat', sans-serif; font-weight: 700; }
+
+  /* Hint */
+  .hint { background: rgba(200,16,46,0.09); border: 1px solid rgba(200,16,46,0.2); border-radius: 5px; padding: 10px 14px; font-size: 0.76rem; color: #ccc; line-height: 1.5; }
+  .hint strong { color: #fff; }
+  .hint.garland { background: rgba(20,120,20,0.12); border-color: rgba(20,180,20,0.25); }
+  .hint.wreath  { background: rgba(20,100,20,0.12); border-color: rgba(20,150,20,0.25); }
+
+  /* CTA */
+  .cta-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--red); border-radius: 6px; padding: 20px 24px; display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .cta-card .cta-text strong { display: block; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.88rem; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; margin-bottom: 4px; }
+  .cta-card .cta-text p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; max-width: 460px; }
+  .cta-card .cta-text .note { font-size: 0.72rem; color: #3dba5e; margin-top: 6px; }
+  .btn-cta { background: var(--red); color: #fff; padding: 11px 22px; border-radius: 3px; font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; white-space: nowrap; transition: background 0.15s; flex-shrink: 0; align-self: center; }
+  .btn-cta:hover { background: var(--red-dim); }
+
+  /* Snow */
+  .snow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+  .snowflake { position: absolute; top: -10px; color: #ffffff0e; animation: snowfall linear infinite; }
+  @keyframes snowfall { to { transform: translateY(100vh) rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="snow" id="snow"></div>
+
+<header>
+  <div class="logo">
+    <img src="https://images.squarespace-cdn.com/content/v1/5f763658cce74c4bce01c68e/1603252509504-ZFK8QBW30IVESHS56UKY/Highstrung-logo+white.png?format=750w" alt="High-Strung Christmas Lights" id="logo-img">
+    <span class="logo-fallback">High-Strung Christmas Lights</span>
+  </div>
+  <a href="https://clienthub.getjobber.com/hubs/e1d72488-4113-44d4-933c-1b45bed9a714/public/requests/257811/new" target="_blank" class="header-cta">Get a Free Quote</a>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-eyebrow">Design Your Display</div>
+    <h1>See Your Home<br>Lit Up</h1>
+    <p>Upload a photo and design your custom Christmas light display — lights, garland, and wreaths.</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="upload-zone">
+    <div class="upload-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+      </svg>
+    </div>
+    <h3>Choose Your Home Photo</h3>
+    <p>JPG, PNG, HEIC — front-facing photos work best</p>
+    <label style="background:var(--red);color:#fff;padding:10px 24px;border-radius:3px;font-family:Montserrat,sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:4px;">
+      Browse Photo
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+    </label>
+  </div>
+
+  <!-- Design Panel -->
+  <div id="panel-design">
+
+    <!-- Toolbar -->
+    <div class="toolbar" id="toolbar">
+      <!-- Mode -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Mode:</span>
+        <button class="mode-btn active" data-mode="lights" id="mode-lights">💡 Lights</button>
+        <button class="mode-btn" data-mode="garland" id="mode-garland">🌿 Garland</button>
+        <button class="mode-btn" data-mode="wreath" id="mode-wreath">🎄 Wreath</button>
+      </div>
+      <div class="toolbar-sep"></div>
+
+      <!-- Lights options -->
+      <div class="toolbar-group" id="lights-opts">
+        <span class="toolbar-label">Pattern:</span>
+        <div class="pattern-slots" id="pattern-slots"></div>
+        <div class="pattern-add" id="pattern-add" title="Add color">+</div>
+        <div class="toolbar-sep"></div>
+        <span class="toolbar-label">Spacing:</span>
+        <input type="range" id="spacing-range" min="5" max="32" value="13" style="width:65px">
+        <span class="range-val" id="spacing-val">13px</span>
+      </div>
+
+      <!-- Garland options -->
+      <div class="toolbar-group" id="garland-opts" style="display:none">
+        <span class="toolbar-label">Density:</span>
+        <input type="range" id="garland-density" min="1" max="5" value="3" style="width:65px">
+        <span class="range-val" id="garland-val">Med</span>
+      </div>
+
+      <!-- Wreath options -->
+      <div class="toolbar-group" id="wreath-opts" style="display:none">
+        <span class="toolbar-label">Size:</span>
+        <input type="range" id="wreath-size" min="20" max="160" value="60" style="width:80px">
+        <span class="range-val" id="wreath-val">60px</span>
+        <div class="toolbar-sep"></div>
+        <span class="toolbar-label" style="font-size:0.6rem;color:#888">Click photo to place</span>
+      </div>
+
+      <div class="toolbar-sep"></div>
+      <button class="btn btn-danger" id="btn-undo">↩ Undo</button>
+      <button class="btn btn-danger" id="btn-clear">Clear All</button>
+      <div class="toolbar-sep"></div>
+      <label style="font-size:0.62rem;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+        <input type="file" id="change-photo" accept="image/*" style="display:none"> 📷 Change Photo
+      </label>
+
+      <!-- Color picker popup -->
+      <div class="color-picker-popup" id="color-picker-popup"></div>
+    </div>
+
+    <!-- Hint -->
+    <div class="hint" id="draw-hint">
+      <strong>Lights:</strong> Click to place points along a roofline. <strong>Double-click</strong> to finish that line. Pattern and spacing update live.
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap" id="canvas-wrap">
+      <img id="main-img" alt="Your home">
+      <canvas id="main-canvas"></canvas>
+      <div class="zoom-controls">
+        <div class="zoom-btn" id="zoom-in"  title="Zoom in">+</div>
+        <div class="zoom-btn zoom-reset" id="zoom-reset" title="Reset zoom">FIT</div>
+        <div class="zoom-btn" id="zoom-out" title="Zoom out">−</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-success" id="btn-download">↓ Download & Get Quote</button>
+      <button class="btn btn-secondary" id="btn-restart">New Photo</button>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-card">
+      <div class="cta-text">
+        <strong>Ready for a Free Quote?</strong>
+        <p>Click "Download & Get Quote" above to save your design, then attach it to your quote request so we know exactly what you have in mind.</p>
+        <p class="note">✓ Download your preview first, then upload it in the "Upload Images" section of the quote form.</p>
+      </div>
+      <a href="https://clienthub.getjobber.com/hubs/e1d72488-4113-44d4-933c-1b45bed9a714/public/requests/257811/new" target="_blank" class="btn-cta">Open Quote Form →</a>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// Snow
+const snowEl = document.getElementById('snow');
+for (let i = 0; i < 16; i++) {
+  const s = document.createElement('div');
+  s.className = 'snowflake'; s.textContent = '❄';
+  s.style.cssText = `left:${Math.random()*100}%;font-size:${0.4+Math.random()*0.8}em;animation-duration:${10+Math.random()*10}s;animation-delay:${Math.random()*12}s`;
+  snowEl.appendChild(s);
+}
+document.getElementById('logo-img').onerror = function() { this.classList.add('errored'); };
+
+// ── Palette ────────────────────────────────────────────────────────────────
+const PALETTE = {
+  warm_white:'#ffe899', cool_white:'#e8f4ff', red:'#ff2222',
+  green:'#22cc22', blue:'#2255ff', gold:'#ffd700',
+  orange:'#ff8800', pink:'#ff44cc', purple:'#9933ff', teal:'#00ccbb',
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let mode         = 'lights';
+let pattern      = ['#ffe899'];
+let spacing      = 13;
+let garlandDensity = 3;
+let wreathSize   = 60;
+let pickerTarget = null;
+
+// Drawing state
+let elements     = []; // all placed elements
+let currentPts   = []; // points for line being built
+let lastClick    = 0;
+let animId       = null;
+let imgNatW      = 1, imgNatH = 1;
+
+// ── Upload ─────────────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('upload-zone');
+const fileInput  = document.getElementById('file-input');
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+document.getElementById('change-photo').addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('main-img');
+  img.src = url;
+  img.onload = () => {
+    imgNatW = img.naturalWidth; imgNatH = img.naturalHeight;
+    const c = document.getElementById('main-canvas');
+    c.width = imgNatW; c.height = imgNatH;
+    elements = []; currentPts = [];
+    resetZoom();
+    uploadZone.style.display = 'none';
+    document.getElementById('panel-design').classList.add('active');
+    render();
+  };
+}
+
+// ── Mode switching ─────────────────────────────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // commit any in-progress line
+    commitCurrentLine();
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.remove('active','garland-active','wreath-active');
+    });
+    btn.classList.add(mode === 'garland' ? 'garland-active' : mode === 'wreath' ? 'wreath-active' : 'active');
+    document.getElementById('lights-opts').style.display  = mode === 'lights'  ? 'flex' : 'none';
+    document.getElementById('garland-opts').style.display = mode === 'garland' ? 'flex' : 'none';
+    document.getElementById('wreath-opts').style.display  = mode === 'wreath'  ? 'flex' : 'none';
+    const hint = document.getElementById('draw-hint');
+    if (mode === 'lights') {
+      hint.className = 'hint';
+      hint.innerHTML = '<strong>Lights:</strong> Click to place points along a roofline. <strong>Double-click</strong> to finish that line. Pattern and spacing update live.';
+    } else if (mode === 'garland') {
+      hint.className = 'hint garland';
+      hint.innerHTML = '<strong>Garland:</strong> Click to place points along an edge. <strong>Double-click</strong> to finish. Garland drapes with a natural curve.';
+    } else {
+      hint.className = 'hint wreath';
+      hint.innerHTML = '<strong>Wreath:</strong> Click anywhere on the photo to place a wreath. Adjust size with the slider. Click again to place more.';
+    }
+    render();
+  });
+});
+
+// ── Pattern builder ────────────────────────────────────────────────────────
+function renderPattern() {
+  const slots = document.getElementById('pattern-slots');
+  slots.innerHTML = '';
+  pattern.forEach((col, i) => {
+    const s = document.createElement('div');
+    s.className = 'pattern-slot';
+    s.style.background = s.style.borderColor = col;
+    s.title = 'Click to change · Right-click to remove';
+    s.addEventListener('click', e => { e.stopPropagation(); openPicker(i, s); });
+    s.addEventListener('contextmenu', e => { e.preventDefault(); if (pattern.length > 1) { pattern.splice(i,1); renderPattern(); render(); } });
+    slots.appendChild(s);
+  });
+  render();
+}
+
+document.getElementById('pattern-add').addEventListener('click', e => {
+  e.stopPropagation();
+  if (pattern.length < 8) { pattern.push('#ff2222'); renderPattern(); openPicker(pattern.length-1, document.querySelectorAll('.pattern-slot')[pattern.length-1]); }
+});
+
+// Color picker
+const popup = document.getElementById('color-picker-popup');
+Object.entries(PALETTE).forEach(([,hex]) => {
+  const sw = document.createElement('div');
+  sw.className = 'cp-swatch'; sw.style.background = hex;
+  sw.addEventListener('click', e => {
+    e.stopPropagation();
+    if (pickerTarget !== null) { pattern[pickerTarget] = hex; renderPattern(); }
+    closePicker();
+  });
+  popup.appendChild(sw);
+});
+function openPicker(idx, el) {
+  pickerTarget = idx;
+  popup.classList.add('open');
+}
+function closePicker() { popup.classList.remove('open'); pickerTarget = null; }
+document.addEventListener('click', closePicker);
+
+// Spacing
+document.getElementById('spacing-range').addEventListener('input', e => {
+  spacing = parseInt(e.target.value);
+  document.getElementById('spacing-val').textContent = spacing + 'px';
+  render();
+});
+document.getElementById('garland-density').addEventListener('input', e => {
+  garlandDensity = parseInt(e.target.value);
+  const labels = ['','Sparse','Light','Med','Full','Dense'];
+  document.getElementById('garland-val').textContent = labels[garlandDensity];
+  render();
+});
+document.getElementById('wreath-size').addEventListener('input', e => {
+  wreathSize = parseInt(e.target.value);
+  document.getElementById('wreath-val').textContent = wreathSize + 'px';
+  render();
+});
+
+renderPattern();
+
+// ── Canvas interaction + pinch-to-zoom ────────────────────────────────────
+const canvas = document.getElementById('main-canvas');
+const ctx    = canvas.getContext('2d');
+
+// Viewport transform: pan (panX, panY) and zoom (scale)
+let panX = 0, panY = 0, scale = 1;
+let minScale = 1, maxScale = 8;
+
+// Pinch state
+let pinchStartDist = 0, pinchStartScale = 1;
+let pinchStartMidX = 0, pinchStartMidY = 0;
+let pinchStartPanX = 0, pinchStartPanY = 0;
+let isPinching = false;
+
+// Pan state
+let isPanning = false;
+let panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
+let pointerDown = false;
+let pointerMoved = false;
+let pointerDownTime = 0;
+let pointerDownX = 0, pointerDownY = 0;
+
+function clampPan() {
+  const W = canvas.width, H = canvas.height;
+  const rect = canvas.getBoundingClientRect();
+  const dispW = rect.width, dispH = rect.height;
+  const scaledW = dispW * scale, scaledH = dispH * scale;
+  // Allow panning so image stays within view
+  const maxPanX = 0, minPanX = dispW - scaledW;
+  const maxPanY = 0, minPanY = dispH - scaledH;
+  panX = Math.min(maxPanX, Math.max(minPanX, panX));
+  panY = Math.min(maxPanY, Math.max(minPanY, panY));
+}
+
+function resetZoom() {
+  scale = 1; panX = 0; panY = 0;
+}
+
+// Convert screen position to canvas image coordinates
+function screenToCanvas(sx, sy) {
+  const rect = canvas.getBoundingClientRect();
+  const dispW = rect.width, dispH = rect.height;
+  // screen pos relative to canvas element
+  const rx = sx - rect.left, ry = sy - rect.top;
+  // account for pan and zoom
+  const ix = (rx - panX) / scale;
+  const iy = (ry - panY) / scale;
+  // scale to natural image coords
+  return [ix * (canvas.width / dispW), iy * (canvas.height / dispH)];
+}
+
+// Apply viewport transform for rendering
+function applyViewport() {
+  const rect = canvas.getBoundingClientRect();
+  const dispW = rect.width, dispH = rect.height;
+  const scaleX = canvas.width / dispW;
+  const scaleY = canvas.height / dispH;
+  ctx.setTransform(scale * (1/scaleX), 0, 0, scale * (1/scaleY), panX * scaleX, panY * scaleY);
+}
+
+function resetViewport() {
+  ctx.setTransform(1,0,0,1,0,0);
+}
+
+// ── Touch handlers for pinch-zoom ──────────────────────────────────────────
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    isPinching = true;
+    const t1 = e.touches[0], t2 = e.touches[1];
+    pinchStartDist  = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    pinchStartScale = scale;
+    pinchStartMidX  = (t1.clientX+t2.clientX)/2;
+    pinchStartMidY  = (t1.clientY+t2.clientY)/2;
+    pinchStartPanX  = panX;
+    pinchStartPanY  = panY;
+  } else if (e.touches.length === 1) {
+    isPinching = false;
+    const t = e.touches[0];
+    pointerDown = true;
+    pointerMoved = false;
+    pointerDownTime = Date.now();
+    pointerDownX = t.clientX;
+    pointerDownY = t.clientY;
+    if (scale > 1.05) {
+      isPanning = true;
+      panStartX = t.clientX; panStartY = t.clientY;
+      panStartPX = panX; panStartPY = panY;
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 2 && isPinching) {
+    const t1 = e.touches[0], t2 = e.touches[1];
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    const newScale = Math.min(maxScale, Math.max(minScale, pinchStartScale * dist / pinchStartDist));
+    const midX = (t1.clientX+t2.clientX)/2;
+    const midY = (t1.clientY+t2.clientY)/2;
+    const rect = canvas.getBoundingClientRect();
+    const rx = midX - rect.left, ry = midY - rect.top;
+    // Zoom towards pinch midpoint
+    panX = rx - (rx - pinchStartPanX) * (newScale / pinchStartScale);
+    panY = ry - (ry - pinchStartPanY) * (newScale / pinchStartScale);
+    scale = newScale;
+    clampPan();
+    render();
+  } else if (e.touches.length === 1 && isPanning) {
+    const t = e.touches[0];
+    const dx = t.clientX - panStartX, dy = t.clientY - panStartY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) pointerMoved = true;
+    panX = panStartPX + dx;
+    panY = panStartPY + dy;
+    clampPan();
+    render();
+  } else if (e.touches.length === 1) {
+    const t = e.touches[0];
+    const dx = t.clientX - pointerDownX, dy = t.clientY - pointerDownY;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) pointerMoved = true;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  if (isPinching && e.touches.length < 2) { isPinching = false; return; }
+  if (isPanning) { isPanning = false; }
+
+  // Only register as a tap/click if not moved and not pinching
+  if (!pointerMoved && !isPinching && e.changedTouches.length === 1) {
+    const t = e.changedTouches[0];
+    const now = Date.now();
+    const [x, y] = screenToCanvas(t.clientX, t.clientY);
+
+    if (mode === 'wreath') {
+      elements.push({ type:'wreath', x, y, size: wreathSize });
+      render(); pointerDown = false; return;
+    }
+    if (now - lastClick < 350) { commitCurrentLine(); lastClick = 0; pointerDown = false; return; }
+    lastClick = now;
+    currentPts.push([x, y]);
+    render();
+  }
+  pointerDown = false; pointerMoved = false;
+}, { passive: false });
+
+// ── Mouse handlers ────────────────────────────────────────────────────────
+canvas.addEventListener('click', e => {
+  const now = Date.now();
+  const [x, y] = screenToCanvas(e.clientX, e.clientY);
+
+  if (mode === 'wreath') {
+    elements.push({ type:'wreath', x, y, size: wreathSize });
+    render(); return;
+  }
+  if (now - lastClick < 350) { commitCurrentLine(); lastClick = 0; return; }
+  lastClick = now;
+  currentPts.push([x, y]);
+  render();
+});
+
+// Mouse wheel zoom
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const rx = e.clientX - rect.left, ry = e.clientY - rect.top;
+  const delta = e.deltaY > 0 ? 0.85 : 1.18;
+  const newScale = Math.min(maxScale, Math.max(minScale, scale * delta));
+  panX = rx - (rx - panX) * (newScale / scale);
+  panY = ry - (ry - panY) * (newScale / scale);
+  scale = newScale;
+  clampPan();
+  render();
+}, { passive: false });
+
+// Zoom buttons
+document.getElementById('zoom-in').addEventListener('click', e => {
+  e.stopPropagation();
+  const rect = canvas.getBoundingClientRect();
+  const cx = rect.width/2, cy = rect.height/2;
+  const newScale = Math.min(maxScale, scale * 1.5);
+  panX = cx - (cx - panX) * (newScale / scale);
+  panY = cy - (cy - panY) * (newScale / scale);
+  scale = newScale; clampPan(); render();
+});
+document.getElementById('zoom-out').addEventListener('click', e => {
+  e.stopPropagation();
+  const rect = canvas.getBoundingClientRect();
+  const cx = rect.width/2, cy = rect.height/2;
+  const newScale = Math.max(minScale, scale / 1.5);
+  panX = cx - (cx - panX) * (newScale / scale);
+  panY = cy - (cy - panY) * (newScale / scale);
+  scale = newScale; clampPan(); render();
+});
+document.getElementById('zoom-reset').addEventListener('click', e => {
+  e.stopPropagation();
+  resetZoom(); render();
+});
+
+function commitCurrentLine() {
+  if (currentPts.length >= 2) {
+    elements.push({
+      type: mode,
+      points: [...currentPts],
+      pattern: [...pattern],
+      spacing,
+      garlandDensity
+    });
+  }
+  currentPts = [];
+  render();
+}
+
+// Undo / Clear
+document.getElementById('btn-undo').addEventListener('click', () => {
+  if (currentPts.length > 0) currentPts = [];
+  else elements.pop();
+  render();
+});
+document.getElementById('btn-clear').addEventListener('click', () => { elements = []; currentPts = []; render(); });
+document.getElementById('btn-restart').addEventListener('click', () => {
+  elements = []; currentPts = [];
+  uploadZone.style.display = '';
+  document.getElementById('panel-design').classList.remove('active');
+  document.getElementById('file-input').value = '';
+});
+
+// ── Render ─────────────────────────────────────────────────────────────────
+let animT = 0;
+function render() {
+  cancelAnimationFrame(animId);
+  animT = 0;
+  animLoop();
+}
+
+function animLoop() {
+  drawFrame(animT);
+  animT += 0.025;
+  animId = requestAnimationFrame(animLoop);
+}
+
+function drawFrame(t) {
+  const W = canvas.width, H = canvas.height;
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  applyViewport();
+
+  const bulbR = Math.max(2, W / 200);
+  const wireW = Math.max(0.5, W / 650);
+
+  // Draw all committed elements
+  const all = [...elements, ...(currentPts.length > 0 ? [{ type: mode, points: currentPts, pattern, spacing, garlandDensity, _current: true }] : [])];
+
+  for (const el of all) {
+    if (el.type === 'wreath') {
+      drawWreath(ctx, el.x, el.y, el.size, t);
+    } else if (el.type === 'lights') {
+      drawLightsLine(ctx, el, bulbR, wireW, t);
+    } else if (el.type === 'garland') {
+      drawGarlandLine(ctx, el, wireW, t);
+    }
+  }
+
+  // Show click points for current in-progress line
+  if (currentPts.length > 0 && mode !== 'wreath') {
+    currentPts.forEach(([px, py]) => {
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); ctx.arc(px, py, bulbR*1.6, 0, Math.PI*2); ctx.fill();
+    });
+  }
+
+  // Empty state
+  if (elements.length === 0 && currentPts.length === 0) {
+    ctx.restore();
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `bold ${Math.max(13, W/55)}px Montserrat,sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Click to start designing', W/2, H/2);
+    return;
+  }
+
+  ctx.restore();
+
+  // Zoom level indicator
+  if (scale > 1.05) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(200,16,46,0.85)';
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 54, 22, 4);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.max(10,W/80)}px Montserrat,sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(Math.round(scale*10)/10 + '×', 35, 19);
+    ctx.restore();
+  }
+}
+
+// ── Lights rendering ───────────────────────────────────────────────────────
+function drawLightsLine(ctx, el, bulbR, wireW, t) {
+  const pts = el.points;
+  if (pts.length < 2) return;
+  const sp = el.spacing || spacing;
+  const pat = el.pattern || pattern;
+
+  // Wire
+  ctx.strokeStyle = 'rgba(60,60,60,0.55)';
+  ctx.lineWidth = wireW; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
+
+  // Bulbs
+  let distAcc = 0, nextD = sp * 0.3, bIdx = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0,y0] = pts[i], [x1,y1] = pts[i+1];
+    const dx=x1-x0, dy=y1-y0, len=Math.sqrt(dx*dx+dy*dy);
+    while (nextD <= distAcc + len) {
+      const f = (nextD - distAcc) / len;
+      const bx = x0+dx*f, by = y0+dy*f;
+      const col = pat[bIdx % pat.length];
+      const bright = 0.55 + 0.45 * Math.sin(t * 2.1 + bIdx * 0.7);
+      drawBulb(ctx, bx, by, bulbR, col, bright, t);
+      bIdx++; nextD += sp;
+    }
+    distAcc += len;
+  }
+}
+
+function drawBulb(ctx, x, y, r, col, bright, t) {
+  // Glow halo
+  const halo = ctx.createRadialGradient(x,y,0,x,y,r*3.5);
+  halo.addColorStop(0, hexA(col, 0.45*bright));
+  halo.addColorStop(1, hexA(col, 0));
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x,y,r*3.5,0,Math.PI*2); ctx.fill();
+
+  // Starburst
+  ctx.save(); ctx.globalAlpha = 0.16*bright; ctx.translate(x,y);
+  for (let s=0;s<8;s++) {
+    ctx.rotate(Math.PI/8);
+    const sg = ctx.createLinearGradient(0,0,r*2.8,0);
+    sg.addColorStop(0,col); sg.addColorStop(1,'transparent');
+    ctx.strokeStyle=sg; ctx.lineWidth=r*0.28;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r*2.8,0); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Bulb body
+  const bg = ctx.createRadialGradient(x-r*0.3,y-r*0.3,0,x,y,r);
+  bg.addColorStop(0, hexA('#ffffff', bright));
+  bg.addColorStop(0.3, hexA(col, 0.95*bright));
+  bg.addColorStop(1,   hexA(col, 0.6*bright));
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+
+  // Hot center
+  ctx.fillStyle = hexA('#ffffff', 0.85*bright);
+  ctx.beginPath(); ctx.arc(x-r*0.18,y-r*0.18,r*0.25,0,Math.PI*2); ctx.fill();
+}
+
+// ── Garland rendering ──────────────────────────────────────────────────────
+function drawGarlandLine(ctx, el, wireW, t) {
+  const pts = el.points;
+  if (pts.length < 2) return;
+  const density = el.garlandDensity || garlandDensity;
+  const sag = 18 * density; // how much each segment sags
+
+  // Draw each segment as a catenary curve
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0,y0] = pts[i], [x1,y1] = pts[i+1];
+    const mx = (x0+x1)/2, my = (y0+y1)/2 + sag;
+
+    // Main garland rope — dark green
+    ctx.strokeStyle = '#1a4a1a';
+    ctx.lineWidth   = Math.max(2, wireW * 4);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.quadraticCurveTo(mx, my, x1, y1);
+    ctx.stroke();
+
+    // Garland texture — lighter green clusters
+    const steps = Math.floor(Math.sqrt((x1-x0)**2+(y1-y0)**2) / (8 / density));
+    for (let s = 0; s <= steps; s++) {
+      const tt = s / steps;
+      // quadratic bezier point
+      const bx = (1-tt)*(1-tt)*x0 + 2*(1-tt)*tt*mx + tt*tt*x1;
+      const by = (1-tt)*(1-tt)*y0 + 2*(1-tt)*tt*my + tt*tt*y1;
+      const sz = Math.max(2.5, wireW*3) * (0.8 + 0.4*Math.random());
+      const hue = 100 + Math.floor(Math.random()*40);
+      ctx.fillStyle = `hsla(${hue},70%,${25+Math.floor(Math.random()*20)}%,0.9)`;
+      ctx.beginPath(); ctx.arc(bx, by, sz, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Red berries scattered
+    for (let s = 0; s < steps * 0.15; s++) {
+      const tt = Math.random();
+      const bx = (1-tt)*(1-tt)*x0 + 2*(1-tt)*tt*mx + tt*tt*x1;
+      const by = (1-tt)*(1-tt)*y0 + 2*(1-tt)*tt*my + tt*tt*y1;
+      ctx.fillStyle = '#cc1111';
+      ctx.beginPath(); ctx.arc(bx, by, Math.max(1.5, wireW*2), 0, Math.PI*2); ctx.fill();
+    }
+  }
+}
+
+// ── Wreath rendering ───────────────────────────────────────────────────────
+function drawWreath(ctx, cx, cy, size, t) {
+  const r = size / 2;
+
+  // Outer ring — green layers
+  for (let layer = 0; layer < 3; layer++) {
+    const lr = r - layer * (r*0.12);
+    const segs = Math.max(16, Math.floor(lr * 0.8));
+    for (let i = 0; i < segs; i++) {
+      const angle = (i / segs) * Math.PI * 2;
+      const nx = cx + Math.cos(angle) * lr;
+      const ny = cy + Math.sin(angle) * lr;
+      const leafW = Math.max(3, r * 0.22);
+      const leafH = Math.max(4, r * 0.28);
+      ctx.save();
+      ctx.translate(nx, ny);
+      ctx.rotate(angle + Math.PI/2);
+      const leafGrad = ctx.createRadialGradient(0,0,0,0,0,leafH);
+      leafGrad.addColorStop(0, '#3a8c2a');
+      leafGrad.addColorStop(1, '#1a4a0a');
+      ctx.fillStyle = leafGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, leafW*0.5, leafH*0.5, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Inner shadow
+  const inner = ctx.createRadialGradient(cx,cy,r*0.35,cx,cy,r*0.65);
+  inner.addColorStop(0,'rgba(0,0,0,0.7)');
+  inner.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = inner;
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.65,0,Math.PI*2); ctx.fill();
+
+  // Red berries scattered on wreath
+  const berryCount = Math.max(5, Math.floor(r * 0.5));
+  // Use seeded positions based on cx,cy so they don't jump
+  for (let i = 0; i < berryCount; i++) {
+    const angle = (i / berryCount) * Math.PI * 2 + 0.3;
+    const br = r * (0.65 + (i%3)*0.1);
+    const bx = cx + Math.cos(angle) * br;
+    const by = cy + Math.sin(angle) * br;
+    const bGrad = ctx.createRadialGradient(bx-1,by-1,0,bx,by,Math.max(2,r*0.07));
+    bGrad.addColorStop(0,'#ff4444'); bGrad.addColorStop(1,'#990000');
+    ctx.fillStyle = bGrad;
+    ctx.beginPath(); ctx.arc(bx,by,Math.max(2,r*0.07),0,Math.PI*2); ctx.fill();
+  }
+
+  // Red bow at top
+  const bowY = cy - r * 0.92;
+  const bw = r * 0.35, bh = r * 0.22;
+  ctx.fillStyle = '#cc1111';
+  // Left loop
+  ctx.beginPath(); ctx.ellipse(cx - bw*0.5, bowY, bw*0.55, bh*0.55, -0.5, 0, Math.PI*2); ctx.fill();
+  // Right loop
+  ctx.beginPath(); ctx.ellipse(cx + bw*0.5, bowY, bw*0.55, bh*0.55, 0.5, 0, Math.PI*2); ctx.fill();
+  // Center knot
+  ctx.fillStyle = '#aa0000';
+  ctx.beginPath(); ctx.arc(cx, bowY, bw*0.18, 0, Math.PI*2); ctx.fill();
+
+  // Twinkling lights on wreath
+  const lightCount = Math.max(8, Math.floor(r * 0.7));
+  const lPat = ['#ffe899','#ff2222','#22cc22','#2255ff','#ffd700'];
+  for (let i = 0; i < lightCount; i++) {
+    const angle = (i / lightCount) * Math.PI * 2;
+    const lr2 = r * (0.62 + (i%2)*0.15);
+    const lx = cx + Math.cos(angle) * lr2;
+    const ly = cy + Math.sin(angle) * lr2;
+    const col = lPat[i % lPat.length];
+    const bright = 0.5 + 0.5*Math.sin(t*2.2 + i*0.9);
+    drawBulb(ctx, lx, ly, Math.max(1.5, r*0.055), col, bright, t);
+  }
+}
+
+// ── Download ───────────────────────────────────────────────────────────────
+document.getElementById('btn-download').addEventListener('click', () => {
+  commitCurrentLine();
+  const img = document.getElementById('main-img');
+  const tmp = document.createElement('canvas');
+  tmp.width = img.naturalWidth; tmp.height = img.naturalHeight;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(img, 0, 0);
+  // Draw one final static frame onto tmp
+  const saved = ctx;
+  tctx.drawImage(canvas, 0, 0);
+  const a = document.createElement('a');
+  a.href = tmp.toDataURL('image/jpeg', 0.93);
+  a.download = 'highstrung-lights-preview.jpg';
+  a.click();
+});
+
+// ── Helper ─────────────────────────────────────────────────────────────────
+function hexA(hex, alpha) {
+  if (!hex || hex.length < 7) return `rgba(255,255,255,${alpha.toFixed(3)})`;
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+}
+</script>
+</body>
+</html>
